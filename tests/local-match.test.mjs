@@ -44,10 +44,11 @@ test('pause and resume keep the card and points but invalidate old attempts and 
   assert(match.pause()); assert(!match.pause()); readLocalSnapshot(match.snapshot());
   assert.equal(match.answer('guest', { round, figure: missingFigure(match.snapshot()) }, 2000), 'ignored');
   assert(match.resume());
-  assert.deepEqual(match.snapshot().card, card);
+  assert.equal(match.snapshot().card, null);
   assert.notEqual(match.snapshot().round, round);
   assert.equal(match.ready('guest', round), false);
   const resumed = reveal(match);
+  assert.deepEqual(match.snapshot().card, card);
   assert.equal(match.answer('guest', { round, figure: missingFigure(match.snapshot()) }, 3000), 'ignored');
   assert.equal(match.answer('host', { round: resumed, figure: missingFigure(match.snapshot()) }, 3000), 'won');
   assert(match.pause()); assert(match.resume());
@@ -73,6 +74,7 @@ for (const total of [10, 33]) test(`a ${total}-card multiplayer game ends with e
 });
 test('guest snapshots reject injected layouts, scores and invalid progress', () => {
   const match = new LocalMatch(id, 10);
+  reveal(match);
   for (const mutate of [
     state => state.total = 11,
     state => state.scores.guest = 100,
@@ -86,4 +88,27 @@ test('guest snapshots reject injected layouts, scores and invalid progress', () 
     const state = JSON.parse(JSON.stringify(match.snapshot())); mutate(state);
     assert.throws(() => readLocalSnapshot(state));
   }
+});
+
+
+test('covered cards stay private until reveal, including the next card and resumed attempts', () => {
+  const match = new LocalMatch(id, 10);
+  const round = match.snapshot().round;
+  assert.equal(match.snapshot().card, null); assert.equal(missingFigure(match.snapshot()), null);
+  readLocalSnapshot(match.snapshot());
+  match.ready('host', round); match.ready('guest', round);
+  assert.equal(match.snapshot().stage, 'countdown'); assert.equal(match.snapshot().card, null);
+  readLocalSnapshot(match.snapshot());
+  assert.equal(match.answer('guest', { round, figure: 'ghost' }, 1), 'ignored');
+  match.reveal(round); const visible = match.snapshot();
+  assert(visible.card); readLocalSnapshot(visible);
+  match.pause(); assert.equal(match.snapshot().card, null); readLocalSnapshot(match.snapshot());
+  match.resume(); assert.equal(match.snapshot().card, null);
+  const resumed = reveal(match); assert.deepEqual(match.snapshot().card, visible.card);
+  match.answer('host', { round: resumed, figure: missingFigure(match.snapshot()) }, 2000);
+  match.advance(resumed); assert.equal(match.snapshot().card, null); readLocalSnapshot(match.snapshot());
+  const leaked = { ...match.snapshot(), card: visible.card };
+  assert.throws(() => readLocalSnapshot(leaked));
+  assert.throws(() => readLocalSnapshot({ ...visible, card: null }));
+  assert.throws(() => readLocalSnapshot({ ...visible, version: 1 }));
 });

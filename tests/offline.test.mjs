@@ -22,8 +22,10 @@ test('offline cache contains the module, eight figures, styles and install icons
       self: { registration: { scope }, clients: { async claim() {} }, addEventListener(type, callback) { listeners.set(type, callback); } },
     });
     let install; listeners.get('install')({ waitUntil(promise) { install = promise; } }); await install;
-    let home; listeners.get('fetch')({ request: { url: scope + '?offline=1', method: 'GET', mode: 'navigate' }, respondWith(promise) { home = promise; } });
-    assert.equal((await home).body, scope + 'index.html');
+    for (const suffix of ['?offline=1', '#gruselino', '?offline=1#gruselino?invite=private']) {
+      let home; listeners.get('fetch')({ request: { url: scope + suffix, method: 'GET', mode: 'navigate' }, respondWith(promise) { home = promise; } });
+      assert.equal((await home).body, scope + 'index.html');
+    }
     for (const path of assets) {
       let response; listeners.get('fetch')({ request: { url: scope + path, method: 'GET', mode: 'cors' }, respondWith(promise) { response = promise; } });
       assert.equal((await response).body, scope + path);

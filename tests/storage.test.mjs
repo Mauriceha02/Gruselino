@@ -74,3 +74,12 @@ test('shortened normal decks and invalid quick-game boundaries cannot load', () 
   normal.deck = normal.deck.slice(0, 11);
   assert.equal(loadGame({ getItem: () => JSON.stringify(normal) }).state, null);
 });
+
+
+test('oversized saves are rejected without overwriting stored progress', () => {
+  const state = { ...createGame(1, 'easy'), padding: 'x'.repeat(64 * 1024) };
+  let writes = 0;
+  const storage = { getItem: () => JSON.stringify(state), setItem: () => { writes++; } };
+  assert.equal(loadGame(storage).state, null); assert(loadGame(storage).error);
+  assert(saveGame(storage, state)); assert.equal(writes, 0);
+});

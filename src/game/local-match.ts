@@ -4,7 +4,7 @@ import { FIGURES, isFigure, type FigureId } from './figures.js';
 export type Role = 'host' | 'guest';
 export type Stage = 'loading' | 'countdown' | 'searching' | 'result' | 'paused' | 'finished';
 export interface LocalSnapshot {
-  version: 1; revision: number; round: string; index: number; total: CardCount; stage: Stage;
+  version: 2; revision: number; round: string; index: number; total: CardCount; stage: Stage;
   card: { id: string; figures: Placement[] } | null;
   scores: Record<Role, number>; winner: Role | null;
 }
@@ -29,9 +29,9 @@ export class LocalMatch {
   snapshot(): LocalSnapshot {
     const card = this.deck[this.index];
     return {
-      version: 1, revision: this.revision, round: `${this.id}:${this.index}:${this.attempt}`, index: this.index,
+      version: 2, revision: this.revision, round: `${this.id}:${this.index}:${this.attempt}`, index: this.index,
       total: this.deck.length as CardCount, stage: this.stage,
-      card: card ? { id: card.id, figures: card.figures.map(figure => ({ ...figure })) } : null,
+      card: card && ['searching', 'result'].includes(this.stage) ? { id: card.id, figures: card.figures.map(figure => ({ ...figure })) } : null,
       scores: { host: this.awarded.filter(role => role === 'host').length, guest: this.awarded.filter(role => role === 'guest').length },
       winner: this.awarded[this.index] ?? null,
     };
@@ -77,10 +77,10 @@ export class LocalMatch {
 
 export function readLocalSnapshot(value: unknown): LocalSnapshot {
   const invalid = (): never => { throw new Error('Ungültige Mehrspieler-Partie.'); };
-  if (!record(value) || value.version !== 1 || !integer(value.revision, 0, 1000000) || typeof value.round !== 'string' || !/^[a-f0-9]{32}:(?:[0-9]|[12][0-9]|3[0-3]):\d{1,7}$/.test(value.round) || ![10, 33].includes(value.total as number) || !integer(value.index, 0, value.total as number) || Number(value.round.split(':')[1]) !== value.index || !['loading', 'countdown', 'searching', 'result', 'paused', 'finished'].includes(String(value.stage)) || !record(value.scores) || !integer(value.scores.host, 0, value.total as number) || !integer(value.scores.guest, 0, value.total as number) || (value.winner !== null && value.winner !== 'host' && value.winner !== 'guest')) invalid();
+  if (!record(value) || value.version !== 2 || !integer(value.revision, 0, 1000000) || typeof value.round !== 'string' || !/^[a-f0-9]{32}:(?:[0-9]|[12][0-9]|3[0-3]):\d{1,7}$/.test(value.round) || ![10, 33].includes(value.total as number) || !integer(value.index, 0, value.total as number) || Number(value.round.split(':')[1]) !== value.index || !['loading', 'countdown', 'searching', 'result', 'paused', 'finished'].includes(String(value.stage)) || !record(value.scores) || !integer(value.scores.host, 0, value.total as number) || !integer(value.scores.guest, 0, value.total as number) || (value.winner !== null && value.winner !== 'host' && value.winner !== 'guest')) invalid();
   const state = value as unknown as LocalSnapshot;
   if ((state.stage === 'finished') !== (state.index === state.total) || state.scores.host + state.scores.guest !== state.index + (state.winner === null ? 0 : 1) || (state.stage === 'result' && state.winner === null) || (state.winner !== null && !['result', 'paused'].includes(state.stage))) invalid();
-  if (state.stage === 'finished') { if (state.card !== null) invalid(); }
+  if (!['searching', 'result'].includes(state.stage)) { if (state.card !== null) invalid(); }
   else {
     const card = state.card;
     if (!record(card) || card.id !== `card-${String(state.index + 1).padStart(2, '0')}` || !Array.isArray(card.figures) || card.figures.length !== 7) invalid();

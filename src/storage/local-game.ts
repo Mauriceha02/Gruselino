@@ -9,14 +9,20 @@ export function loadGame(storage: StorageAccess): { state: GameState | null; err
   try {
     const raw = storage.getItem(STORAGE_KEY);
     if (raw === null) return { state: null, error: null };
+    if (raw.length > 64 * 1024) throw new Error('Spielstand zu groß.');
     const state: unknown = JSON.parse(raw);
     assertGameState(state);
     return { state, error: null };
   } catch { return { state: null, error: 'Der Spielstand konnte nicht geladen werden. Du kannst eine neue Partie starten.' }; }
 }
 export function saveGame(storage: StorageAccess, state: GameState): string | null {
-  try { assertGameState(state); storage.setItem(STORAGE_KEY, JSON.stringify(state)); return null; }
-  catch { return 'Speichern hat nicht geklappt. Die Partie läuft nur in diesem Fenster weiter.'; }
+  try {
+    assertGameState(state);
+    const raw = JSON.stringify(state);
+    if (raw.length > 64 * 1024) throw new Error('Spielstand zu groß.');
+    storage.setItem(STORAGE_KEY, raw);
+    return null;
+  } catch { return 'Speichern hat nicht geklappt. Die Partie läuft nur in diesem Fenster weiter.'; }
 }
 export function getSavedSummary(storage: StorageAccess = browserStorage()): { card: number; total: number; score: number; finished: boolean } | null {
   const { state } = loadGame(storage);

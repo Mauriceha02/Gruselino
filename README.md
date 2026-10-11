@@ -1,13 +1,17 @@
 # Gruselino
 
-Suchspiel für das iPhone: fehlende Figur antippen. Gegen ein bis drei Computer oder zu zweit im WLAN, mit 10 oder 33 Karten. Solopartien werden lokal gespeichert und laufen offline.
+Die fehlende Figur antippen: solo gegen Computer oder zu zweit, mit 10 oder 33 Karten. Solopartien werden lokal gespeichert und laufen offline.
 
-`Gruselino` und `Game-Multiplayer` nebeneinander auschecken, in beiden `npm ci` ausführen. In Gruselino: `npm run dev` → http://localhost:5175. Die Commit-ID in `multiplayer.json` legt die Netzwerkversion fest; alternativ `MULTIPLAYER_SOURCE` setzen.
+`Gruselino` und `Game-Multiplayer` nebeneinander auschecken und jeweils `npm ci` ausführen. Die Netzwerkversion ist in `multiplayer.json` festgelegt.
 
-Prüfen: `npm test`. Bauen: `npm run build` → `dist/` für die Vorschau, `bundle/` für die gemeinsame Spiele-App.
+```sh
+npm run dev
+```
 
-Zu zweit: „Mitspieler im WLAN“ → Einladungslink erstellen und teilen. Das zweite Gerät verbindet sich beim Öffnen automatisch, ohne Konto oder Antwortcode. Ohne Internet steht der Code-Modus zur Verfügung. Dafür HTTPS oder localhost verwenden und beide Geräte geöffnet lassen. Die gemeinsame Partie bleibt in der Verbindung; Solospielstände bleiben erhalten. Falsche Antworten sperren 1,5 Sekunden. Die erste richtige Antwort beim Gastgeber gewinnt die Karte.
+Öffnen: http://localhost:5175. Prüfen: `npm test`. Build: `npm run build` → `dist/` und `bundle/`.
 
-Für ein Update zuerst Gruselino auf `Dev` pushen, danach die Spiele-App mit der neuen Commit-ID in `games.json`. Gruselino braucht dafür keine eigene GitHub-Pages-Installation.
+Multiplayer: Einladungslink teilen, beide Geräte geöffnet lassen. Ohne Internet gibt es den Code-Modus. Die erste richtige Antwort beim Gastgeber gewinnt; falsche Antworten sperren 1,5 Sekunden.
 
-[Regeln und Planung](PLAN.md).
+Updates: zuerst Game-Multiplayer pushen, bei Bedarf `multiplayer.json` aktualisieren, dann Gruselino pushen und dessen Commit-ID in der Spiele-App unter `games.json` eintragen.
+
+[Originalregeln](https://product-files.ravensburger.cloud/manuals/663759.pdf). Eigene Figuren und Kartenlayouts; Antippen und Eingabesperre sind Anpassungen für die App.
