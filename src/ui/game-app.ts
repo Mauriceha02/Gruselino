@@ -6,6 +6,7 @@ export { getSavedSummary } from '../storage/local-game.js';
 
 export interface GameOptions { onHome?: () => void; storage?: StorageAccess; assetBase?: URL; version?: string }
 const escape = (value: string): string => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
+const points = (count: number): string => `${count} ${count === 1 ? 'Punkt' : 'Punkte'}`;
 
 export function mountGruselino(root: HTMLElement, options: GameOptions = {}): { dispose(): void } {
   const storage = options.storage ?? browserStorage();
@@ -56,6 +57,7 @@ export function mountGruselino(root: HTMLElement, options: GameOptions = {}): { 
 
   function render(): void {
     if (disposed) return;
+    root.style.setProperty('--g-players', String(state?.players.length ?? 2));
     const focus = root.contains(document.activeElement) && document.activeElement instanceof HTMLElement ? document.activeElement.dataset.action ?? document.activeElement.dataset.figure : undefined;
     const menuOpen = root.querySelector<HTMLDetailsElement>('.g-menu')?.open ?? false;
     const card = state ? currentCard(state) : null;
@@ -65,13 +67,13 @@ export function mountGruselino(root: HTMLElement, options: GameOptions = {}): { 
     const menu = `<details class="g-menu"${menuOpen ? ' open' : ''}><summary>Spielmenü</summary><div class="g-menu-content"><h2>Neue Partie</h2>${form()}<p>Eine falsche Antwort sperrt deine Auswahl für 1,5 Sekunden.</p><p>Einfach: 4–8 Sekunden · Stark: 2–5 Sekunden.</p></div></details>`;
     const header = `<header class="g-header"><button type="button" class="g-home" data-action="home" aria-label="Zur Spieleauswahl">← Spiele</button><div class="g-title">Gruselino${options.version ? `<small>Version ${escape(options.version)}</small>` : ''}</div>${screen === 'setup' ? '' : menu}</header>`;
     if (screen === 'setup') {
-      root.innerHTML = `${header}<section class="g-setup"><div class="g-setup-art" aria-hidden="true">${image('ghost')}${image('bat')}${image('pumpkin')}</div><h1>Welche Figur fehlt?</h1><p>Sieben Figuren auf der Karte, acht auf deiner Übersicht. Tippe die fehlende Figur an, bevor ein Computer sie findet.</p>${state ? `<button class="g-primary g-resume" data-action="resume" type="button">${state.status === 'finished' ? 'Ergebnis ansehen' : 'Partie fortsetzen'}</button><p class="g-saved">Karte ${Math.min(state.index + 1, 33)} von 33 · ${score(state, 'human')} Punkte</p>` : ''}${form()}<p class="g-rule-note">33 Karten · ein Punkt pro gewonnener Karte</p></section>${messages()}`;
+      root.innerHTML = `${header}<section class="g-setup"><div class="g-setup-art" aria-hidden="true">${image('ghost')}${image('bat')}${image('pumpkin')}</div><h1>Welche Figur fehlt?</h1><p>Sieben Figuren auf der Karte, acht auf deiner Übersicht. Tippe die fehlende Figur an, bevor ein Computer sie findet.</p>${state ? `<button class="g-primary g-resume" data-action="resume" type="button">${state.status === 'finished' ? 'Ergebnis ansehen' : 'Partie fortsetzen'}</button><p class="g-saved">Karte ${Math.min(state.index + 1, 33)} von 33 · ${points(score(state, 'human'))}</p>` : ''}${form()}<p class="g-rule-note">33 Karten · ein Punkt pro gewonnener Karte</p></section>${messages()}`;
       return;
     }
     let cardContent = '';
     if (screen === 'finished') {
       const names = winners(state!).map(player => player.name).join(' und ');
-      cardContent = `<div class="g-finish"><span class="g-finish-mark" aria-hidden="true">✦</span><h1>${escape(names)} ${winners(state!).length === 1 ? 'gewinnt' : 'gewinnen'}!</h1><p>Alle 33 Karten sind vergeben.</p><ol>${[...state!.players].sort((a, b) => score(state!, b.id) - score(state!, a.id)).map(player => `<li><span>${escape(player.name)}</span><strong>${score(state!, player.id)} Punkte</strong></li>`).join('')}</ol><button class="g-primary" type="button" data-action="setup">Neue Partie</button></div>`;
+      cardContent = `<div class="g-finish"><span class="g-finish-mark" aria-hidden="true">✦</span><h1>${escape(names)} ${winners(state!).length === 1 ? 'gewinnt' : 'gewinnen'}!</h1><p>Alle 33 Karten sind vergeben.</p><ol>${[...state!.players].sort((a, b) => score(state!, b.id) - score(state!, a.id)).map(player => `<li><span>${escape(player.name)}</span><strong>${points(score(state!, player.id))}</strong></li>`).join('')}</ol><button class="g-primary" type="button" data-action="setup">Neue Partie</button></div>`;
     } else if (screen === 'paused') {
       cardContent = `<div class="g-card-cover"><span aria-hidden="true">Ⅱ</span><h1>Pause</h1><p>Deine Karte bleibt erhalten.</p><button class="g-primary" type="button" data-action="resume">Weiter</button></div>`;
     } else if (screen === 'countdown') {
@@ -203,5 +205,5 @@ export function mountGruselino(root: HTMLElement, options: GameOptions = {}): { 
     if (menu?.open && event.target instanceof Node && !menu.contains(event.target)) menu.open = false;
   }, { signal: events.signal });
   render();
-  return { dispose(): void { if (disposed) return; cancel(); disposed = true; events.abort(); root.replaceChildren(); root.classList.remove('gruselino'); } };
+  return { dispose(): void { if (disposed) return; cancel(); disposed = true; events.abort(); root.replaceChildren(); root.classList.remove('gruselino'); root.style.removeProperty('--g-players'); } };
 }

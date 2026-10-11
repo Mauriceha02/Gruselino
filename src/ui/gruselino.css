@@ -39,7 +39,7 @@
 .gruselino .g-saved { margin-top:10px; font-size:12px; }
 .gruselino .g-rule-note { margin-top:24px; font-size:12px; }
 .gruselino .g-shell { flex:1; min-height:0; display:flex; flex-direction:column; }
-.gruselino .g-scores { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); padding:10px 14px 6px; gap:8px; flex:none; }
+.gruselino .g-scores { display:grid; grid-template-columns:repeat(var(--g-players,4),minmax(0,1fr)); padding:10px 14px 6px; gap:8px; flex:none; }
 .gruselino .g-score { display:flex; justify-content:space-between; align-items:center; gap:6px; min-height:35px; border:1px solid #faf5e924; border-radius:8px; padding:6px 8px; }
 .gruselino .g-score span { font-size:10px; color:#cfd8ca; }
 .gruselino .g-score strong { font:20px Georgia,serif; color:var(--g-paper); }
@@ -85,7 +85,7 @@
 .gruselino .g-finish ol { list-style:none; margin:0; padding:0; }
 .gruselino .g-finish li { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #193e3520; font-size:13px; }
 @media (max-width:600px) {
-  .gruselino .g-scores { grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+  .gruselino .g-scores { gap:6px; }
   .gruselino .g-score { flex-direction:column; gap:1px; padding:3px; }
   .gruselino .g-score strong { font-size:18px; }
 }
