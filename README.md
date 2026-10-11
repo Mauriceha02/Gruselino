@@ -6,10 +6,8 @@ Suchspiel für das iPhone: fehlende Figur antippen. Gegen ein bis drei Computer 
 
 Prüfen: `npm test`. Bauen: `npm run build` → `dist/` für die Vorschau, `bundle/` für die gemeinsame Spiele-App.
 
-Zu zweit: „Mitspieler im WLAN“ → Einladung teilen → Antwortcode beim Gastgeber einfügen. Dafür HTTPS oder localhost verwenden und beide Geräte geöffnet lassen. Die gemeinsame Partie bleibt in der Verbindung; Solospielstände bleiben erhalten. Falsche Antworten sperren 1,5 Sekunden. Die erste richtige Antwort beim Gastgeber gewinnt die Karte.
+Zu zweit: „Mitspieler im WLAN“ → Einladungslink erstellen und teilen. Das zweite Gerät verbindet sich beim Öffnen automatisch, ohne Konto oder Antwortcode. Ohne Internet steht der Code-Modus zur Verfügung. Dafür HTTPS oder localhost verwenden und beide Geräte geöffnet lassen. Die gemeinsame Partie bleibt in der Verbindung; Solospielstände bleiben erhalten. Falsche Antworten sperren 1,5 Sekunden. Die erste richtige Antwort beim Gastgeber gewinnt die Karte.
 
 Für ein Update zuerst Gruselino auf `Dev` pushen, danach die Spiele-App mit der neuen Commit-ID in `games.json`. Gruselino braucht dafür keine eigene GitHub-Pages-Installation.
 
 [Regeln und Planung](PLAN.md).
-
-Einladungslinks verbinden beide Geräte ohne Antwortcode, sobald der gemeinsame Cloudflare-Dienst in Game-Multiplayers `connection.json` eingerichtet ist. Spieler benötigen kein Konto. Ohne Internet steht weiterhin der Code-Modus zur Verfügung. Die Verbindung bleibt direkt; die Solospielstände bleiben lokal.
