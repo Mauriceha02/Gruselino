@@ -10,7 +10,7 @@
 .gruselino button { cursor:pointer; touch-action:manipulation; }
 .gruselino button:disabled { cursor:default; }
 .gruselino button:focus-visible, .gruselino select:focus-visible, .gruselino summary:focus-visible { outline:3px solid var(--g-gold); outline-offset:2px; }
-.gruselino h1, .gruselino h2, .gruselino p { margin:0; }
+.gruselino h1, .gruselino h2, .gruselino p { margin:0; letter-spacing:normal; }
 .gruselino .g-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex:none; padding:8px 14px; min-height:52px; border-bottom:1px solid #faf5e924; }
 .gruselino .g-home { min-height:36px; border:0; padding:4px 0; color:#d0d9cb; background:none; font-size:12px; }
 .gruselino .g-title { font:24px/1.1 Georgia,serif; letter-spacing:-.5px; margin-right:auto; }

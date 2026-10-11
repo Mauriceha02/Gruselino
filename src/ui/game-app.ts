@@ -73,7 +73,8 @@ export function mountGruselino(root: HTMLElement, options: GameOptions = {}): { 
     let cardContent = '';
     if (screen === 'finished') {
       const names = winners(state!).map(player => player.name).join(' und ');
-      cardContent = `<div class="g-finish"><span class="g-finish-mark" aria-hidden="true">✦</span><h1>${escape(names)} ${winners(state!).length === 1 ? 'gewinnt' : 'gewinnen'}!</h1><p>Alle 33 Karten sind vergeben.</p><ol>${[...state!.players].sort((a, b) => score(state!, b.id) - score(state!, a.id)).map(player => `<li><span>${escape(player.name)}</span><strong>${points(score(state!, player.id))}</strong></li>`).join('')}</ol><button class="g-primary" type="button" data-action="setup">Neue Partie</button></div>`;
+      const title = winners(state!).length > 1 ? 'Gleichstand!' : names === 'Du' ? 'Du gewinnst!' : `${names} gewinnt!`;
+      cardContent = `<div class="g-finish"><span class="g-finish-mark" aria-hidden="true">✦</span><h1>${escape(title)}</h1><p>Alle 33 Karten sind vergeben.</p><ol>${[...state!.players].sort((a, b) => score(state!, b.id) - score(state!, a.id)).map(player => `<li><span>${escape(player.name)}</span><strong>${points(score(state!, player.id))}</strong></li>`).join('')}</ol><button class="g-primary" type="button" data-action="setup">Neue Partie</button></div>`;
     } else if (screen === 'paused') {
       cardContent = `<div class="g-card-cover"><span aria-hidden="true">Ⅱ</span><h1>Pause</h1><p>Deine Karte bleibt erhalten.</p><button class="g-primary" type="button" data-action="resume">Weiter</button></div>`;
     } else if (screen === 'countdown') {
