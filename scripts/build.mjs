@@ -30,6 +30,7 @@ const mappings = [
   ['src/ui/gruselino.css', 'assets/gruselino.css'], ['src/ui/standalone.css', 'assets/standalone.css'],
   ...await files('public/assets/', /\.(?:svg|png)$/),
   ...await files('public/app/', /\.js$/),
+  ...await files('public/network/', /\.js$/),
 ].map(entry => typeof entry === 'string' ? [entry, entry.replace(/^public\//, '')] : entry);
 for (const [source] of mappings) await regular(source);
 await regular('src/storage/service-worker.js');
@@ -39,7 +40,7 @@ for (const [source, target] of mappings) {
   await mkdir(new URL('./', dist), { recursive: true });
   if (source === 'index.html') await writeFile(dist, (await readFile(new URL(source, root), 'utf8')).replace('{{VERSION}}', version));
   else await copyFile(new URL(source, root), dist);
-  if (target === 'assets/gruselino.css' || (/^assets\//.test(target) && /\.(?:svg|png)$/.test(target)) || (/^app\//.test(target) && !['app/main.js', 'app/ui/offline-app.js'].includes(target))) {
+  if (target.startsWith('network/') || target === 'assets/gruselino.css' || (/^assets\//.test(target) && /\.(?:svg|png)$/.test(target)) || (/^app\//.test(target) && !['app/main.js', 'app/ui/offline-app.js'].includes(target))) {
     const bundle = new URL(`bundle/${target}`, root);
     await mkdir(new URL('./', bundle), { recursive: true });
     await copyFile(dist, bundle);

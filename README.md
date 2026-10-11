@@ -1,12 +1,13 @@
 # Gruselino
 
-Suchspiel für das iPhone: fehlende Figur antippen, gegen ein bis drei Computer spielen. Schnelle Partie mit 10 Karten oder normale Partie mit 33 Karten, zwei Spielstärken, eigener lokaler Spielstand und Offlinebetrieb.
+Suchspiel für das iPhone: fehlende Figur antippen. Gegen ein bis drei Computer oder zu zweit im WLAN, mit 10 oder 33 Karten. Solopartien werden lokal gespeichert und laufen offline.
 
-`npm ci` → `npm run dev` → http://localhost:5175.
-Handy im gleichen WLAN: `npm run dev:lan` → `http://<IP-des-Macs>:5175`.
+`Gruselino` und `Game-Multiplayer` nebeneinander auschecken, in beiden `npm ci` ausführen. In Gruselino: `npm run dev` → http://localhost:5175. Die Commit-ID in `multiplayer.json` legt die Netzwerkversion fest; alternativ `MULTIPLAYER_SOURCE` setzen.
 
 Prüfen: `npm test`. Bauen: `npm run build` → `dist/` für die Vorschau, `bundle/` für die gemeinsame Spiele-App.
 
-Die Spiele-App übernimmt eine feste Gruselino-Commit-ID. Gruselino zuerst auf `Dev` pushen, anschließend die Spiele-App. Gruselino benötigt dafür keine eigene GitHub-Pages-Installation.
+Zu zweit: „Mitspieler im WLAN“ → Einladung teilen → Antwortcode beim Gastgeber einfügen. Dafür HTTPS oder localhost verwenden und beide Geräte geöffnet lassen. Die gemeinsame Partie bleibt in der Verbindung; Solospielstände bleiben erhalten. Falsche Antworten sperren 1,5 Sekunden. Die erste richtige Antwort beim Gastgeber gewinnt die Karte.
 
-[Regeln und Planung](PLAN.md). Falsche Antworten sperren die Auswahl 1,5 Sekunden. Beim Fortsetzen bleibt die Suchkarte gleich; Computerzeiten starten neu.
+Für ein Update zuerst Gruselino auf `Dev` pushen, danach die Spiele-App mit der neuen Commit-ID in `games.json`. Gruselino braucht dafür keine eigene GitHub-Pages-Installation.
+
+[Regeln und Planung](PLAN.md).

@@ -22,5 +22,21 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --ignore-scripts
+      - name: Read pinned multiplayer version
+        id: multiplayer
+        run: |
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; const config=JSON.parse(readFileSync("multiplayer.json","utf8")); if(config.repository!=="Mauriceha02/Game-Multiplayer" || !/^[a-f0-9]{40}$/.test(config.revision)) throw new Error("Invalid multiplayer version"); process.stdout.write("revision="+config.revision+"\n");' >> "$GITHUB_OUTPUT"
+      - name: Check out multiplayer
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: Mauriceha02/Game-Multiplayer
+          ref: ${{ steps.multiplayer.outputs.revision }}
+          path: .cache/multiplayer
+          persist-credentials: false
+      - name: Install multiplayer dependencies
+        working-directory: .cache/multiplayer
+        run: npm ci --ignore-scripts
       - name: Build and test
+        env:
+          MULTIPLAYER_SOURCE: ${{ github.workspace }}/.cache/multiplayer
         run: npm test

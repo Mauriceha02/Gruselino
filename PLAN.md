@@ -1,6 +1,6 @@
 # Gruselino – Planung
 
-Stand: 11. Oktober 2026. Die erste App-Version ist umgesetzt. Dieser Plan dokumentiert ihre Regeln und die Einbindung in die Spiele-App.
+Stand: 11. Oktober 2026. Solo- und WLAN-Modus sind umgesetzt. Dieser Plan dokumentiert ihre Regeln und die Einbindung in die Spiele-App.
 
 ## Regeln des Originals
 
@@ -18,7 +18,7 @@ Die genaue Häufigkeit der fehlenden Figuren im Originaldeck ist in der Anleitun
 
 ## Erste App-Version
 
-Ein Mensch gegen ein bis drei Computergegner, vollständig offline. Kein Konto, kein Server und kein WLAN-Mehrspieler in der ersten Version.
+Ein Mensch gegen ein bis drei Computergegner, vollständig offline. Kein Konto und kein Spielserver. Der zusätzliche WLAN-Modus steht unten.
 
 1. Spielstärke und Anzahl der Computer auswählen.
 2. Nach einer kurzen Startanzeige die erste Suchkarte aufdecken.
@@ -109,6 +109,19 @@ Ein einfacher Link zu einer separat veröffentlichten Gruselino-Website wäre eb
 3. Computerzeiten, Pause und Fortsetzen ergänzen.
 4. Spielstand und Offlinebetrieb einbauen; auf dem echten iPhone ausprobieren.
 5. Gruselino als festgelegte Version in die Spiele-App aufnehmen.
-6. WLAN-Mehrspieler später separat planen: Dafür braucht es zusätzlich eine gemeinsame Spielleitung und eine faire Abstimmung der Antwortzeiten zwischen den Geräten.
+6. WLAN-Modus für zwei Menschen integrieren und auf zwei Geräten prüfen.
 
 Wichtige Prüfungen: jede Karte hat genau sieben der acht Figuren; genau eine Lösung; keine doppelte Punktevergabe; alte Timer bleiben wirkungslos; falsche Antworten umgehen die Sperre nicht; Summe der Punkte entspricht den vergebenen Karten; Fortsetzen verliert keine Karte; Wechsel zwischen Spielen beendet alle Gruselino-Timer; beide Spiele bleiben offline nutzbar.
+
+## WLAN-Modus für zwei Menschen
+
+Das separate Repository `Game-Multiplayer` liefert die WebRTC-Verbindung; `multiplayer.json` legt den geprüften Commit fest. Gruselino enthält die eigene gemeinsame Partielogik und Oberfläche.
+
+- Ein Gastgeber wählt 10 oder 33 Karten, teilt die Einladung und fügt den Antwortcode des Mitspielers ein. Beide Fenster bleiben geöffnet.
+- Ohne Internet-Hilfe werden nur lokale Verbindungswege verwendet. Die optionale Internet-Hilfe nutzt Googles STUN-Dienst; Spielnachrichten laufen direkt zwischen den Geräten.
+- Der Gastgeber erzeugt den Stapel, verwaltet die Punkte und überträgt die aktuelle Karte samt Anordnung. Erst wenn beide Geräte ihre Figuren geladen haben, beginnt die Startanzeige.
+- Die erste richtige Antwort, die beim Gastgeber ankommt, gewinnt. Netzwerkverzögerung kann dem Gastgeber einen kleinen Vorteil geben; diese Version gleicht die Antwortzeiten nicht aus.
+- Falsche Antworten sperren den jeweiligen Spieler 1,5 Sekunden. Der Gastgeber prüft die Sperre unabhängig von den Tasten des Mitspielers. Verspätete Antworten, doppelte Eingaben und Antworten auf frühere Karten geben keine Punkte.
+- Pause auf einem Gerät oder ein Wechsel in den Hintergrund pausiert beide. Karte und Punkte bleiben während der Verbindung erhalten. Nach „Weiter“ werden beide Geräte erneut bereitgemeldet.
+- Schließen, Neuladen oder Verlassen des WLAN-Modus beendet die gemeinsame Partie. Dieser Modus schreibt keine lokalen Spielstände; die Solopartien beider Spiele bleiben erhalten.
+- Die Spiele-App liefert die Netzwerkdateien mit aus und speichert sie im bestehenden Offline-Cache. Es gibt keinen zusätzlichen Service Worker.

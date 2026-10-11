@@ -29,6 +29,7 @@ test('offline cache contains the module, eight figures, styles and install icons
       assert.equal((await response).body, scope + path);
     }
     assert(assets.includes('assets/ghost.svg')); assert(assets.includes('app/ui/game-app.js'));
+    for (const path of ['app/ui/local-game.js', 'app/ui/solo-game.js', 'app/game/local-match.js', 'network/peer.js', 'network/signals.js', 'network/protocol.js']) assert(assets.includes(path), path);
     assert(!assets.includes('PLAN.md')); assert(!assets.includes('.git/config'));
   }
 });

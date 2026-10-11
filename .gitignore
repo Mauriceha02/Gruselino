@@ -12,3 +12,6 @@ Thumbs.db
 public/app/
 bundle/
 .cache/
+
+public/network/
+.cache/

@@ -106,3 +106,19 @@
   .gruselino .g-title { font-size:20px; }
   .gruselino .g-feedback { min-height:32px; }
 }
+
+.gruselino .g-multiplayer { width:100%; margin-bottom:20px; background:transparent; color:var(--g-paper); border-color:#d9b57980; }
+.gruselino.g-local .g-title { min-width:0; }
+.gruselino.g-local .g-title small { max-width:210px; line-height:1.5; }
+.gruselino .g-net-setup h2 { font:25px Georgia,serif; margin-top:28px; }
+.gruselino .g-net-setup form { margin-top:20px; }
+.gruselino .g-net-setup label { display:grid; gap:7px; margin-block:16px 12px; color:#cfd8ca; font-size:12px; }
+.gruselino .g-net-setup select, .gruselino .g-net-setup textarea { width:100%; max-width:100%; min-width:0; min-height:44px; padding:10px; font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--g-paper); background:#193e35; border:1px solid #faf5e94d; border-radius:7px; }
+.gruselino .g-net-setup textarea { resize:vertical; overflow-wrap:anywhere; }
+.gruselino .g-net-setup textarea[readonly] { font-size:11px; }
+.gruselino .g-net-setup .g-net-check { display:flex; align-items:center; gap:8px; font-size:11px; }
+.gruselino .g-net-setup .g-primary { width:100%; margin-top:10px; }
+.gruselino .g-net-share { display:flex; gap:10px; }
+.gruselino .g-net-share .g-primary { flex:1; }
+.gruselino .g-net-notice { margin-top:18px; color:var(--g-gold); font-size:12px; }
+.gruselino .g-net-link, .gruselino .g-net-pause { min-height:44px; border:0; background:none; color:#cfd8ca; padding:6px 0; font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
