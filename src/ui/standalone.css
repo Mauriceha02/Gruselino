@@ -1,0 +1,10 @@
+:root { color-scheme:dark; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#173e34; color:#faf5e9; }
+* { box-sizing:border-box; }
+body { margin:0; height:100vh; height:100dvh; display:flex; flex-direction:column; padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px); overflow:hidden; }
+#gruselino-root { width:100%; max-width:960px; flex:1; min-height:0; margin-inline:auto; }
+.offline-bar { flex:none; width:100%; max-width:960px; margin-inline:auto; padding:3px 14px; display:flex; gap:12px; justify-content:space-between; color:#bdc9b9; font-size:10px; }
+#offline-status { margin:0; }
+.install-guide { position:relative; }
+.install-guide summary { cursor:pointer; min-height:24px; }
+.install-guide p { position:absolute; z-index:20; right:0; bottom:100%; width:min(320px,80vw); padding:16px; border:1px solid #d9b57980; background:#173e34; border-radius:10px; font-size:13px; }
+[hidden] { display:none !important; }

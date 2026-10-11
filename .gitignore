@@ -9,3 +9,6 @@ coverage/
 .DS_Store
 Thumbs.db
 .idea/
+public/app/
+bundle/
+.cache/

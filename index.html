@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; base-uri 'none'; object-src 'none'; frame-src 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#173e34">
+  <meta name="description" content="Finde die fehlende Figur. Offline gegen Computer spielen, mit lokalem Spielstand.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Gruselino">
+  <title>Gruselino</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/icon-180.png">
+  <link rel="stylesheet" href="./assets/standalone.css">
+  <link rel="stylesheet" href="./assets/gruselino.css">
+  <script type="module" src="./app/main.js"></script>
+</head>
+<body>
+  <main id="gruselino-root" data-version="{{VERSION}}"><p>Gruselino wird geladen.</p><noscript>Bitte aktiviere JavaScript, um zu spielen.</noscript></main>
+  <div class="offline-bar"><p id="offline-status" role="status">Offlinebetrieb wird vorbereitet …</p><details class="install-guide" id="install-guide"><summary>Als App installieren</summary><p>Auf dem iPhone in Safari öffnen → Teilen → Zum Home-Bildschirm. Einmal auf „Offline bereit“ warten. Zum Aktualisieren alle App-Fenster schließen und wieder öffnen.</p></details></div>
+</body>
+</html>

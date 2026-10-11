@@ -1,6 +1,6 @@
 # Gruselino – Planung
 
-Stand: 11. Oktober 2026. Dieses Repository enthält zunächst nur die Planung.
+Stand: 11. Oktober 2026. Die erste App-Version ist umgesetzt. Dieser Plan dokumentiert ihre Regeln und die Einbindung in die Spiele-App.
 
 ## Regeln des Originals
 
@@ -81,7 +81,7 @@ tests/          Regeln und wichtige Zustandswechsel
 scripts/        Build und Offline-Dateien
 ```
 
-Ordner und Code erst mit der Umsetzung anlegen.
+Die Ordner bleiben flach; Spiellogik und Oberfläche sind getrennt.
 
 ## Einbindung in die Spiele-Startseite
 
