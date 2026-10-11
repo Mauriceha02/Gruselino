@@ -1,6 +1,6 @@
 # Gruselino
 
-Suchspiel für das iPhone: fehlende Figur antippen, gegen ein bis drei Computer spielen. 33 Karten, zwei Spielstärken, eigener lokaler Spielstand und Offlinebetrieb.
+Suchspiel für das iPhone: fehlende Figur antippen, gegen ein bis drei Computer spielen. Schnelle Partie mit 10 Karten oder normale Partie mit 33 Karten, zwei Spielstärken, eigener lokaler Spielstand und Offlinebetrieb.
 
 `npm ci` → `npm run dev` → http://localhost:5175.
 Handy im gleichen WLAN: `npm run dev:lan` → `http://<IP-des-Macs>:5175`.

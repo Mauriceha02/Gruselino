@@ -2,6 +2,7 @@ import { FIGURES, isFigure, type FigureId } from './figures.js';
 
 export type Random = () => number;
 export type Difficulty = 'easy' | 'strong';
+export type CardCount = 10 | 33;
 export interface Placement { figure: FigureId; slot: number; rotation: number; scale: number }
 export interface Card { id: string; missing: FigureId; figures: Placement[] }
 export interface Player { id: string; name: string; difficulty: Difficulty | null }
@@ -31,10 +32,13 @@ export function shuffle<T>(values: readonly T[], random: Random = Math.random): 
   return shuffled;
 }
 
-export function createGame(computers: number, difficulty: Difficulty, random: Random = Math.random): GameState {
+export function createGame(computers: number, difficulty: Difficulty, random: Random = Math.random, cardCount: CardCount = 33): GameState {
+  if (![10, 33].includes(cardCount)) throw new Error('Bitte wähle 10 oder 33 Karten.');
   if (!Number.isInteger(computers) || computers < 1 || computers > 3 || !['easy', 'strong'].includes(difficulty)) throw new Error('Bitte wähle ein bis drei Computer und eine Spielstärke.');
   const figures = FIGURES.map(figure => figure.id);
-  const solutions = shuffle([...figures, ...figures, ...figures, ...figures, figures[randomIndex(8, random)]!], random);
+  const cycles = Math.floor(cardCount / figures.length);
+  const extras = shuffle(figures, random).slice(0, cardCount % figures.length);
+  const solutions = shuffle([...Array.from({ length: cycles }, () => figures).flat(), ...extras], random);
   const deck = solutions.map((missing, index): Card => {
     const slots = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8], random);
     return { id: `card-${String(index + 1).padStart(2, '0')}`, missing,
@@ -83,7 +87,7 @@ function integer(value: unknown, min: number, max: number): value is number { re
 
 export function assertGameState(value: unknown): asserts value is GameState {
   const invalid = (): never => { throw new Error('Ungültiger Gruselino-Spielstand.'); };
-  if (!record(value) || value.version !== 1 || !['ready', 'searching', 'result', 'finished'].includes(String(value.status)) || !integer(value.index, 0, 33) || !Array.isArray(value.players) || value.players.length < 2 || value.players.length > 4 || !Array.isArray(value.deck) || value.deck.length !== 33 || !Array.isArray(value.awards)) invalid();
+  if (!record(value) || value.version !== 1 || !['ready', 'searching', 'result', 'finished'].includes(String(value.status)) || !integer(value.index, 0, Array.isArray(value.deck) ? value.deck.length : 0) || !Array.isArray(value.players) || value.players.length < 2 || value.players.length > 4 || !Array.isArray(value.deck) || ![10, 33].includes(value.deck.length) || !Array.isArray(value.awards)) invalid();
   const state = value as unknown as GameState;
   state.players.forEach((player, index) => {
     if (!record(player) || player.id !== (index ? `bot-${index}` : 'human') || player.name !== (index ? `Computer ${index}` : 'Du') || (index ? !['easy', 'strong'].includes(String(player.difficulty)) : player.difficulty !== null)) invalid();
@@ -91,7 +95,7 @@ export function assertGameState(value: unknown): asserts value is GameState {
   const counts = new Map<FigureId, number>();
   const cardIds = new Set<string>();
   state.deck.forEach(card => {
-    if (!record(card) || typeof card.id !== 'string' || !/^card-(?:0[1-9]|[12][0-9]|3[0-3])$/.test(card.id) || cardIds.has(card.id) || !isFigure(card.missing) || !Array.isArray(card.figures) || card.figures.length !== 7) invalid();
+    if (!record(card) || typeof card.id !== 'string' || !/^card-(?:0[1-9]|[12][0-9]|3[0-3])$/.test(card.id) || Number(card.id.slice(5)) > state.deck.length || cardIds.has(card.id) || !isFigure(card.missing) || !Array.isArray(card.figures) || card.figures.length !== 7) invalid();
     cardIds.add(card.id);
     counts.set(card.missing, (counts.get(card.missing) ?? 0) + 1);
     const seen = new Set<FigureId>();
@@ -101,9 +105,10 @@ export function assertGameState(value: unknown): asserts value is GameState {
       seen.add(placement.figure); slots.add(placement.slot);
     });
   });
-  if (FIGURES.some(figure => ![4, 5].includes(counts.get(figure.id) ?? 0))) invalid();
+  const minimum = Math.floor(state.deck.length / FIGURES.length);
+  if (FIGURES.some(figure => ![minimum, minimum + 1].includes(counts.get(figure.id) ?? 0))) invalid();
   const expected = state.index + (state.status === 'result' ? 1 : 0);
-  if ((state.status === 'finished') !== (state.index === 33) || state.awards.length !== expected) invalid();
+  if ((state.status === 'finished') !== (state.index === state.deck.length) || state.awards.length !== expected) invalid();
   state.awards.forEach((award, index) => {
     if (!record(award) || award.cardId !== state.deck[index]!.id || !state.players.some(player => player.id === award.playerId) || !integer(award.timeMs, 0, Number.MAX_SAFE_INTEGER)) invalid();
   });

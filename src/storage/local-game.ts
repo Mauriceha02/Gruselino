@@ -18,7 +18,7 @@ export function saveGame(storage: StorageAccess, state: GameState): string | nul
   try { assertGameState(state); storage.setItem(STORAGE_KEY, JSON.stringify(state)); return null; }
   catch { return 'Speichern hat nicht geklappt. Die Partie läuft nur in diesem Fenster weiter.'; }
 }
-export function getSavedSummary(storage: StorageAccess = browserStorage()): { card: number; score: number; finished: boolean } | null {
+export function getSavedSummary(storage: StorageAccess = browserStorage()): { card: number; total: number; score: number; finished: boolean } | null {
   const { state } = loadGame(storage);
-  return state ? { card: Math.min(state.index + 1, 33), score: score(state, 'human'), finished: state.status === 'finished' } : null;
+  return state ? { card: Math.min(state.index + 1, state.deck.length), total: state.deck.length, score: score(state, 'human'), finished: state.status === 'finished' } : null;
 }

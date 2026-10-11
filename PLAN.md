@@ -14,7 +14,7 @@ Stand: 11. Oktober 2026. Die erste App-Version ist umgesetzt. Dieser Plan dokume
 
 Quelle: [Ravensburger-Spielanleitung](https://product-files.ravensburger.cloud/manuals/663759.pdf), verlinkt auf der [Produktseite](https://www.ravensburger.de/de-DE/pdp/23081).
 
-Die genaue Häufigkeit der fehlenden Figuren im Originaldeck ist in der Anleitung nicht angegeben. Dafür keine Verteilung als Originalregel behaupten. Unsere 33 Karten erhalten eigene Anordnungen; die Lösungen werden möglichst gleichmäßig verteilt. Die zusätzliche Karte gegenüber vier Durchgängen durch alle acht Figuren wird pro Partie zufällig zugeordnet.
+Die genaue Häufigkeit der fehlenden Figuren im Originaldeck ist in der Anleitung nicht angegeben. Dafür keine Verteilung als Originalregel behaupten. Unsere 33 Karten erhalten eigene Anordnungen; die Lösungen werden für beide Partielängen möglichst gleichmäßig verteilt. Die zusätzliche Karte gegenüber vier Durchgängen durch alle acht Figuren wird pro Partie zufällig zugeordnet.
 
 ## Erste App-Version
 
@@ -25,7 +25,7 @@ Ein Mensch gegen ein bis drei Computergegner, vollständig offline. Kein Konto, 
 3. Die fehlende Figur auf der eigenen Übersicht antippen.
 4. Die erste richtige Antwort gewinnt genau einen Punkt und die Karte. Danach werden weitere Antworten für diese Karte gesperrt.
 5. Lösung und Gewinner kurz anzeigen. Erst anschließend die nächste Karte aufdecken.
-6. Nach 33 vergebenen Karten das Ergebnis anzeigen. Bei Punktgleichheit gibt es mehrere Gewinner.
+6. Nach 10 (schnelle Partie) oder 33 (normale Partie) vergebenen Karten das Ergebnis anzeigen. Bei Punktgleichheit gibt es mehrere Gewinner.
 
 Antippen, Punkteanzeige und gemeinsame Gewinner sind Anpassungen für die App. Ein Punkt entspricht einer gewonnenen Karte.
 

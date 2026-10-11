@@ -1,5 +1,5 @@
 import { FIGURES, figureLabel, isFigure, type FigureId } from '../game/figures.js';
-import { createGame, currentCard, nextCard, reveal, resolveAnswers, score, winners, type Difficulty, type GameState, type Answer } from '../game/game.js';
+import { createGame, currentCard, nextCard, reveal, resolveAnswers, score, winners, type Difficulty, type CardCount, type GameState, type Answer } from '../game/game.js';
 import { botReactions, type Reaction } from '../ai/reaction.js';
 import { browserStorage, loadGame, saveGame, type StorageAccess } from '../storage/local-game.js';
 export { getSavedSummary } from '../storage/local-game.js';
@@ -52,7 +52,7 @@ export function mountGruselino(root: HTMLElement, options: GameOptions = {}): { 
   function image(id: FigureId, className = ''): string { return `<img class="${className}" src="${asset(id)}" width="128" height="128" alt="${figureLabel(id)}" draggable="false">`; }
   function form(): string {
     const current = state?.players[1]?.difficulty ?? 'easy';
-    return `<form class="g-start-form"><label>Computergegner<select name="computers">${[1, 2, 3].map(count => `<option value="${count}"${count === (state ? state.players.length - 1 : 1) ? ' selected' : ''}>${count}</option>`).join('')}</select></label><label>Spielstärke<select name="difficulty"><option value="easy"${current === 'easy' ? ' selected' : ''}>Einfach</option><option value="strong"${current === 'strong' ? ' selected' : ''}>Stark</option></select></label><button class="g-primary" type="submit">${state ? 'Neue Partie starten' : 'Partie starten'}</button>${state ? '<p class="g-replace-note">Ersetzt deine bisherige Gruselino-Partie.</p>' : ''}</form>`;
+    return `<form class="g-start-form"><label class="g-length">Partielänge<select name="cardCount"><option value="10"${state?.deck.length === 10 ? ' selected' : ''}>Schnelle Partie · 10 Karten</option><option value="33"${state?.deck.length !== 10 ? ' selected' : ''}>Normale Partie · 33 Karten</option></select></label><label>Computergegner<select name="computers">${[1, 2, 3].map(count => `<option value="${count}"${count === (state ? state.players.length - 1 : 1) ? ' selected' : ''}>${count}</option>`).join('')}</select></label><label>Spielstärke<select name="difficulty"><option value="easy"${current === 'easy' ? ' selected' : ''}>Einfach</option><option value="strong"${current === 'strong' ? ' selected' : ''}>Stark</option></select></label><button class="g-primary" type="submit">${state ? 'Neue Partie starten' : 'Partie starten'}</button>${state ? '<p class="g-replace-note">Ersetzt deine bisherige Gruselino-Partie.</p>' : ''}</form>`;
   }
 
   function render(): void {
@@ -67,14 +67,14 @@ export function mountGruselino(root: HTMLElement, options: GameOptions = {}): { 
     const menu = `<details class="g-menu"${menuOpen ? ' open' : ''}><summary>Spielmenü</summary><div class="g-menu-content"><h2>Neue Partie</h2>${form()}<p>Eine falsche Antwort sperrt deine Auswahl für 1,5 Sekunden.</p><p>Einfach: 4–8 Sekunden · Stark: 2–5 Sekunden.</p></div></details>`;
     const header = `<header class="g-header"><button type="button" class="g-home" data-action="home" aria-label="Zur Spieleauswahl">← Spiele</button><div class="g-title">Gruselino${options.version ? `<small>Version ${escape(options.version)}</small>` : ''}</div>${screen === 'setup' ? '' : menu}</header>`;
     if (screen === 'setup') {
-      root.innerHTML = `${header}<section class="g-setup"><div class="g-setup-art" aria-hidden="true">${image('ghost')}${image('bat')}${image('pumpkin')}</div><h1>Welche Figur fehlt?</h1><p>Sieben Figuren auf der Karte, acht auf deiner Übersicht. Tippe die fehlende Figur an, bevor ein Computer sie findet.</p>${state ? `<button class="g-primary g-resume" data-action="resume" type="button">${state.status === 'finished' ? 'Ergebnis ansehen' : 'Partie fortsetzen'}</button><p class="g-saved">Karte ${Math.min(state.index + 1, 33)} von 33 · ${points(score(state, 'human'))}</p>` : ''}${form()}<p class="g-rule-note">33 Karten · ein Punkt pro gewonnener Karte</p></section>${messages()}`;
+      root.innerHTML = `${header}<section class="g-setup"><div class="g-setup-art" aria-hidden="true">${image('ghost')}${image('bat')}${image('pumpkin')}</div><h1>Welche Figur fehlt?</h1><p>Sieben Figuren auf der Karte, acht auf deiner Übersicht. Tippe die fehlende Figur an, bevor ein Computer sie findet.</p>${state ? `<button class="g-primary g-resume" data-action="resume" type="button">${state.status === 'finished' ? 'Ergebnis ansehen' : 'Partie fortsetzen'}</button><p class="g-saved">Karte ${Math.min(state.index + 1, state.deck.length)} von ${state.deck.length} · ${points(score(state, 'human'))}</p>` : ''}${form()}<p class="g-rule-note">Ein Punkt pro gewonnener Karte</p></section>${messages()}`;
       return;
     }
     let cardContent = '';
     if (screen === 'finished') {
       const names = winners(state!).map(player => player.name).join(' und ');
       const title = winners(state!).length > 1 ? 'Gleichstand!' : names === 'Du' ? 'Du gewinnst!' : `${names} gewinnt!`;
-      cardContent = `<div class="g-finish"><span class="g-finish-mark" aria-hidden="true">✦</span><h1>${escape(title)}</h1><p>Alle 33 Karten sind vergeben.</p><ol>${[...state!.players].sort((a, b) => score(state!, b.id) - score(state!, a.id)).map(player => `<li><span>${escape(player.name)}</span><strong>${points(score(state!, player.id))}</strong></li>`).join('')}</ol><button class="g-primary" type="button" data-action="setup">Neue Partie</button></div>`;
+      cardContent = `<div class="g-finish"><span class="g-finish-mark" aria-hidden="true">✦</span><h1>${escape(title)}</h1><p>Alle ${state!.deck.length} Karten sind vergeben.</p><ol>${[...state!.players].sort((a, b) => score(state!, b.id) - score(state!, a.id)).map(player => `<li><span>${escape(player.name)}</span><strong>${points(score(state!, player.id))}</strong></li>`).join('')}</ol><button class="g-primary" type="button" data-action="setup">Neue Partie</button></div>`;
     } else if (screen === 'paused') {
       cardContent = `<div class="g-card-cover"><span aria-hidden="true">Ⅱ</span><h1>Pause</h1><p>Deine Karte bleibt erhalten.</p><button class="g-primary" type="button" data-action="resume">Weiter</button></div>`;
     } else if (screen === 'countdown') {
@@ -85,7 +85,7 @@ export function mountGruselino(root: HTMLElement, options: GameOptions = {}): { 
     const feedback = screen === 'result' ? `${winningPlayer?.name === 'Du' ? 'Du bekommst' : `${winningPlayer?.name} bekommt`} die Karte. ${figureLabel(card!.missing)} fehlt.` : screen === 'paused' ? 'Die Partie ist pausiert.' : screen === 'finished' ? 'Partie beendet.' : screen === 'countdown' ? 'Gleich geht’s los.' : notice || 'Welche Figur fehlt?';
     const scores = `<div class="g-scores" aria-label="Punktstände">${state!.players.map(player => `<div class="g-score${player.id === 'human' ? ' g-you' : ''}${player.id === winningPlayer?.id ? ' g-scored' : ''}"><span>${escape(player.name)}</span><strong>${score(state!, player.id)}</strong></div>`).join('')}</div>`;
     const answers = `<section class="g-answers" aria-label="Deine Figurenübersicht"><div class="g-answer-heading"><h2>Deine Übersicht</h2><span>${screen === 'search' && locked ? 'Kurz gesperrt' : 'Fehlende Figur antippen'}</span></div><div class="g-answer-grid">${FIGURES.map(figure => `<button type="button" class="g-figure-button${screen === 'result' && figure.id === card!.missing ? ' g-correct' : ''}" data-figure="${figure.id}" aria-label="${figure.label} auswählen"${locked ? ' disabled' : ''}>${image(figure.id)}<span>${figure.label}</span></button>`).join('')}</div></section>`;
-    root.innerHTML = `${header}<div class="g-shell">${scores}<section class="g-arena" aria-label="Suchkarte"><div class="g-round"><span>Karte ${Math.min(state!.index + 1, 33)} / 33</span>${screen === 'search' || screen === 'countdown' || screen === 'result' ? '<button type="button" data-action="pause">Pause</button>' : ''}</div><div class="g-card${screen === 'result' ? ' g-won' : ''}" data-card-id="${card?.id ?? ''}">${cardContent}</div><p class="g-feedback" role="status">${escape(feedback)}</p></section>${screen === 'finished' ? '' : answers}</div>${messages()}`;
+    root.innerHTML = `${header}<div class="g-shell">${scores}<section class="g-arena" aria-label="Suchkarte"><div class="g-round"><span>Karte ${Math.min(state!.index + 1, state!.deck.length)} / ${state!.deck.length}</span>${screen === 'search' || screen === 'countdown' || screen === 'result' ? '<button type="button" data-action="pause">Pause</button>' : ''}</div><div class="g-card${screen === 'result' ? ' g-won' : ''}" data-card-id="${card?.id ?? ''}">${cardContent}</div><p class="g-feedback" role="status">${escape(feedback)}</p></section>${screen === 'finished' ? '' : answers}</div>${messages()}`;
     if (card && (screen === 'search' || screen === 'result')) card.figures.forEach(placement => {
       root.querySelector<HTMLElement>(`[data-position="${placement.figure}"]`)?.style.setProperty('--g-turn', `${placement.rotation}deg`);
       root.querySelector<HTMLElement>(`[data-position="${placement.figure}"]`)?.style.setProperty('--g-scale', String(placement.scale / 100));
@@ -191,7 +191,7 @@ export function mountGruselino(root: HTMLElement, options: GameOptions = {}): { 
     event.preventDefault();
     const data = new FormData(event.target);
     try {
-      const next = createGame(Number(data.get('computers')), String(data.get('difficulty')) as Difficulty);
+      const next = createGame(Number(data.get('computers')), String(data.get('difficulty')) as Difficulty, Math.random, Number(data.get('cardCount')) as CardCount);
       cancel(); state = next; persist(); void prepare();
     } catch { notice = 'Die Partie konnte nicht gestartet werden.'; render(); }
   }, { signal: events.signal });
