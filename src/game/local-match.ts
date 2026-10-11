@@ -70,7 +70,7 @@ export class LocalMatch {
     if (this.stage !== 'paused') return false;
     this.stage = this.beforePause === 'result' ? 'result' : 'loading';
     if (this.stage === 'loading') this.attempt++;
-    this.readyPlayers.clear(); this.cooldown = { host: 0, guest: 0 }; this.revision++;
+    this.readyPlayers.clear(); this.revision++;
     return true;
   }
 }

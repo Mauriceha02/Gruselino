@@ -112,3 +112,16 @@ test('covered cards stay private until reveal, including the next card and resum
   assert.throws(() => readLocalSnapshot({ ...visible, card: null }));
   assert.throws(() => readLocalSnapshot({ ...visible, version: 1 }));
 });
+
+
+test('pausing and resuming cannot bypass a wrong-answer cooldown', () => {
+  const match = new LocalMatch(id, 10);
+  let round = reveal(match);
+  const figure = missingFigure(match.snapshot());
+  const wrong = FIGURES.find(item => item.id !== figure).id;
+  assert.equal(match.answer('guest', { round, figure: wrong }, 100), 'wrong');
+  match.pause(); match.resume(); round = reveal(match);
+  assert.equal(match.answer('guest', { round, figure }, 200), 'blocked');
+  assert.equal(match.answer('guest', { round, figure }, 1599), 'blocked');
+  assert.equal(match.answer('guest', { round, figure }, 1600), 'won');
+});
