@@ -2,6 +2,12 @@ import { createHash } from 'node:crypto';
 import { readdir, readFile, writeFile, mkdir, copyFile, rm, lstat } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
+const serviceModule = await readFile(new URL('public/network/service.js', root), 'utf8');
+const serviceMatch = /^export const SERVICE_URL = (null|"[^"]+");\n$/.exec(serviceModule);
+if (!serviceMatch) throw new Error('Ungültiger Verbindungsdienst.');
+const service = JSON.parse(serviceMatch[1]);
+if (service !== null && !/^https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.workers\.dev$/.test(service)) throw new Error('Ungültiger Verbindungsdienst.');
+
 async function regular(path, directory = false) {
   const parts = path.replace(/\/$/, '').split('/');
   for (let index = 0; index < parts.length; index++) {
@@ -38,7 +44,7 @@ for (const output of ['dist/', 'bundle/']) await rm(new URL(output, root), { rec
 for (const [source, target] of mappings) {
   const dist = new URL(`dist/${target}`, root);
   await mkdir(new URL('./', dist), { recursive: true });
-  if (source === 'index.html') await writeFile(dist, (await readFile(new URL(source, root), 'utf8')).replace('{{VERSION}}', version));
+  if (source === 'index.html') await writeFile(dist, (await readFile(new URL(source, root), 'utf8')).replace('{{VERSION}}', version).replace("connect-src 'self'", "connect-src 'self'" + (service ? ' ' + service : '')));
   else await copyFile(new URL(source, root), dist);
   if (target.startsWith('network/') || target === 'assets/gruselino.css' || (/^assets\//.test(target) && /\.(?:svg|png)$/.test(target)) || (/^app\//.test(target) && !['app/main.js', 'app/ui/offline-app.js'].includes(target))) {
     const bundle = new URL(`bundle/${target}`, root);

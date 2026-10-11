@@ -10,16 +10,21 @@ interface Peer {
 }
 interface Transport { LocalPeer: new (options: { onState(state: string, message: string): void; onMessage(message: unknown): void }) => Peer }
 interface Signals { readSignal(raw: string): { game: string; type: string } }
+interface RoomLink { create(game: string, internet: boolean): Promise<string>; join(raw: string, game: string): Promise<void>; close(): void }
+interface Rooms { getServiceURL(): Promise<string | null>; readRoomInvite(raw: string): { game: string } | null; RoomLink: new (service: string, peer: Peer, onError: (message: string) => void) => RoomLink }
+
 export interface LocalGameOptions { onBack(): void; assetBase?: URL; invite?: string; signal?: AbortSignal }
 const escape = (value: string): string => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const newId = (): string => Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
 
 export async function mountLocalGruselino(root: HTMLElement, options: LocalGameOptions): Promise<{ dispose(): void; invitation(code: string): void }> {
-  const [transport, signals] = await Promise.all([
+  const [transport, signals, rooms] = await Promise.all([
     import(new URL('../../network/peer.js', import.meta.url).href) as Promise<Transport>,
     import(new URL('../../network/signals.js', import.meta.url).href) as Promise<Signals>,
+    import(new URL('../../network/rooms.js', import.meta.url).href) as Promise<Rooms>,
   ]);
+  const service = await rooms.getServiceURL();
   if (options.signal?.aborted) throw new Error('Mehrspielermodus abgebrochen.');
   const assetBase = options.assetBase ?? new URL('../../assets/', import.meta.url);
   if (assetBase.origin !== location.origin) throw new Error('Figuren müssen zur lokalen App gehören.');
@@ -30,6 +35,8 @@ export async function mountLocalGruselino(root: HTMLElement, options: LocalGameO
   let incoming = options.invite ?? '';
   let reply = '';
   let outgoing = '';
+  let linkMode = service !== null;
+  let room: RoomLink | null = null;
   let busy = false;
   let status = 'Einladen oder beitreten';
   let notice = '';
@@ -126,13 +133,35 @@ export async function mountLocalGruselino(root: HTMLElement, options: LocalGameO
       }
     },
   });
+  if (service) room = new rooms.RoomLink(service, peer, message => { if (!disposed) { peer.close(); notice = message; render(); } });
+  function shareValue(): string {
+    if (!rooms.readRoomInvite(outgoing)) return outgoing;
+    const url = new URL('./', document.baseURI); url.hash = `gruselino?${new URLSearchParams({ invite: outgoing })}`;
+    return url.href;
+  }
+  function linkPanel(): string {
+    if (rooms.readRoomInvite(outgoing)) return `<h2>Einladung teilen</h2><p>Dein Mitspieler öffnet diesen Link. Ihr werdet automatisch verbunden – ohne Antwortcode.</p><label>Einladungslink<textarea readonly rows="3" data-output>${escape(shareValue())}</textarea></label><div class="g-net-share"><button class="g-primary" type="button" data-local="share">Teilen …</button><button class="g-primary" type="button" data-local="copy">Link kopieren</button></div>`;
+    if (linkMode && role === 'guest') return '<h2>Mitspieler wird verbunden</h2><p>Lass dieses Fenster geöffnet. Die Verbindung wird automatisch vorbereitet.</p>';
+    return '';
+  }
+  async function join(): Promise<void> {
+    if (rooms.readRoomInvite(incoming)) {
+      if (!room) throw new Error('Einladungslinks sind hier noch nicht eingerichtet. Bitte öffne die aktuelle App.');
+      linkMode = true; role = 'guest'; await room.join(incoming, 'gruselino');
+    } else {
+      room?.close(); linkMode = false;
+      const invitation = signals.readSignal(incoming);
+      if (invitation.game !== 'gruselino' || invitation.type !== 'offer') throw new Error('Du brauchst eine Gruselino-Einladung.');
+      role = 'guest'; outgoing = await peer.joinInvitation(incoming);
+    }
+  }
   function render(): void {
     if (disposed) return;
     root.classList.toggle('g-lobby', snapshot === null);
     root.style.setProperty('--g-players', '2');
     const header = `<header class="g-header"><button type="button" class="g-home" data-local="back">← Zurück</button><div class="g-title">Gruselino<small>Mitspieler · ${escape(status)}</small></div>${snapshot && peer.state === 'connected' && !['paused', 'finished'].includes(snapshot.stage) ? '<button class="g-net-pause" type="button" data-local="pause">Pause</button>' : ''}</header>`;
     if (!snapshot) {
-      root.innerHTML = `${header}<section class="g-setup g-net-setup"><h1>Zusammen spielen</h1><p>Öffnet Gruselino auf beiden Geräten im selben WLAN. Einer lädt ein, der andere tritt bei.</p>${outgoing ? `<h2>${role === 'host' ? 'Einladung teilen' : 'Antwort zurückgeben'}</h2><p>${role === 'host' ? 'Dein Mitspieler tritt mit deiner Einladung bei und gibt dir seinen Antwortcode zurück.' : 'Gib diesen Code an den Gastgeber zurück. Er fügt ihn in seinem ursprünglichen Fenster ein. Lass dieses Fenster geöffnet.'}</p><label>Dein ${role === 'host' ? 'Einladungscode' : 'Antwortcode'}<textarea readonly rows="3" data-output>${escape(outgoing)}</textarea></label><div class="g-net-share"><button class="g-primary" type="button" data-local="share">Teilen …</button><button class="g-primary" type="button" data-local="copy">Code kopieren</button></div>${role === 'host' ? `<form data-form="answer"><label>Antwortcode<textarea name="answer" rows="3" maxlength="34816" required spellcheck="false" autocapitalize="off">${escape(reply)}</textarea></label><button class="g-primary" type="submit"${busy ? ' disabled' : ''}>Verbinden</button></form>` : ''}` : `<form data-form="create"><label>Partielänge<select name="total"><option value="10"${total === 10 ? ' selected' : ''}>Schnelle Partie · 10 Karten</option><option value="33"${total === 33 ? ' selected' : ''}>Normale Partie · 33 Karten</option></select></label><label class="g-net-check"><input type="checkbox" name="internet"${internet ? ' checked' : ''}>Internet-Hilfe für die Verbindung nutzen</label><button class="g-primary" type="submit"${busy ? ' disabled' : ''}>Einladung erstellen</button></form><form data-form="join"><h2>Einladung annehmen</h2><label>Einladungscode oder Link<textarea name="invite" rows="3" maxlength="34816" required spellcheck="false" autocapitalize="off">${escape(incoming)}</textarea></label><button class="g-primary" type="submit"${busy ? ' disabled' : ''}>Beitreten</button></form>`}<p class="g-rule-note">Einladung und Antwort gelten 15 Minuten. Die Internet-Hilfe nutzt Googles STUN-Dienst. Spielnachrichten werden direkt übertragen.</p><p class="g-rule-note">Der Gastgeber vergibt die Karte an die erste richtige Antwort, die bei ihm ankommt. Eine falsche Antwort sperrt die Auswahl 1,5 Sekunden.</p><p class="g-net-notice" role="status">${escape(notice)}</p><button class="g-net-link" type="button" data-local="reset">Neu verbinden</button></section>`;
+      root.innerHTML = `${header}<section class="g-setup g-net-setup"><h1>Zusammen spielen</h1><p>Öffnet Gruselino auf beiden Geräten im selben WLAN. Einer lädt ein, der andere tritt bei.</p>${linkPanel() || (outgoing ? `<h2>${role === 'host' ? 'Einladung teilen' : 'Antwort zurückgeben'}</h2><p>${role === 'host' ? 'Dein Mitspieler tritt mit deiner Einladung bei und gibt dir seinen Antwortcode zurück.' : 'Gib diesen Code an den Gastgeber zurück. Er fügt ihn in seinem ursprünglichen Fenster ein. Lass dieses Fenster geöffnet.'}</p><label>Dein ${role === 'host' ? 'Einladungscode' : 'Antwortcode'}<textarea readonly rows="3" data-output>${escape(outgoing)}</textarea></label><div class="g-net-share"><button class="g-primary" type="button" data-local="share">Teilen …</button><button class="g-primary" type="button" data-local="copy">Code kopieren</button></div>${role === 'host' ? `<form data-form="answer"><label>Antwortcode<textarea name="answer" rows="3" maxlength="34816" required spellcheck="false" autocapitalize="off">${escape(reply)}</textarea></label><button class="g-primary" type="submit"${busy ? ' disabled' : ''}>Verbinden</button></form>` : ''}` : `<form data-form="create"><label>Partielänge<select name="total"><option value="10"${total === 10 ? ' selected' : ''}>Schnelle Partie · 10 Karten</option><option value="33"${total === 33 ? ' selected' : ''}>Normale Partie · 33 Karten</option></select></label><label class="g-net-check"><input type="checkbox" name="internet"${internet ? ' checked' : ''}>Internet-Hilfe für die Verbindung nutzen</label><button class="g-primary" type="submit"${busy ? ' disabled' : ''}>${linkMode ? 'Einladungslink erstellen' : 'Einladungscode erstellen'}</button></form><form data-form="join"><h2>Einladung annehmen</h2><label>Einladungslink oder Code<textarea name="invite" rows="3" maxlength="34816" required spellcheck="false" autocapitalize="off">${escape(incoming)}</textarea></label><button class="g-primary" type="submit"${busy ? ' disabled' : ''}>Beitreten</button></form>`)}${service && !outgoing && !role ? `<button class="g-net-link" type="button" data-local="mode"${busy ? ' disabled' : ''}>${linkMode ? 'Ohne Internet per Code verbinden' : 'Per Einladungslink verbinden'}</button>` : ''}<p class="g-rule-note">Einladungen gelten 15 Minuten. Für Einladungslinks braucht ihr kurz Internet. Ohne Internet könnt ihr Codes nutzen. Die Internet-Hilfe nutzt Googles STUN-Dienst. Spielnachrichten werden direkt übertragen.</p><p class="g-rule-note">Der Gastgeber vergibt die Karte an die erste richtige Antwort, die bei ihm ankommt. Eine falsche Antwort sperrt die Auswahl 1,5 Sekunden.</p><p class="g-net-notice" role="status">${escape(notice)}</p><button class="g-net-link" type="button" data-local="reset">Neu verbinden</button></section>`;
       return;
     }
     const connected = peer.state === 'connected';
@@ -158,11 +187,11 @@ export async function mountLocalGruselino(root: HTMLElement, options: LocalGameO
   }
   async function run(action: () => Promise<void>): Promise<void> {
     if (busy) return;
-    busy = true; notice = ''; render();
-    try { await action(); } catch (error) { notice = error instanceof Error ? error.message : 'Verbindung fehlgeschlagen.'; }
-    finally { busy = false; render(); }
+    const token = generation; busy = true; notice = ''; render();
+    try { await action(); } catch (error) { if (!disposed && token === generation) notice = error instanceof Error ? error.message : 'Verbindung fehlgeschlagen.'; }
+    finally { if (!disposed && token === generation) { busy = false; render(); } }
   }
-  function reset(): void { cancel(); match = null; snapshot = null; role = null; outgoing = ''; incoming = ''; reply = ''; notice = ''; lockUntil = 0; peer.close(); render(); }
+  function reset(): void { room?.close(); busy = false; cancel(); match = null; snapshot = null; role = null; outgoing = ''; incoming = ''; reply = ''; notice = ''; lockUntil = 0; peer.close(); render(); }
   root.addEventListener('input', event => {
     const input = event.target;
     if (input instanceof HTMLTextAreaElement && input.name === 'invite') incoming = input.value;
@@ -172,8 +201,8 @@ export async function mountLocalGruselino(root: HTMLElement, options: LocalGameO
     if (!(event.target instanceof HTMLFormElement)) return;
     event.preventDefault(); const data = new FormData(event.target); const form = event.target.dataset.form;
     void run(async () => {
-      if (form === 'create') { total = Number(data.get('total')) as CardCount; if (total !== 10 && total !== 33) throw new Error('Bitte wähle 10 oder 33 Karten.'); internet = data.has('internet'); role = 'host'; outgoing = await peer.createInvitation('gruselino', internet); }
-      else if (form === 'join') { incoming = String(data.get('invite')); const invitation = signals.readSignal(incoming); if (invitation.game !== 'gruselino' || invitation.type !== 'offer') throw new Error('Du brauchst eine Gruselino-Einladung.'); role = 'guest'; outgoing = await peer.joinInvitation(incoming); }
+      if (form === 'create') { total = Number(data.get('total')) as CardCount; if (total !== 10 && total !== 33) throw new Error('Bitte wähle 10 oder 33 Karten.'); internet = data.has('internet'); role = 'host'; outgoing = room && linkMode ? await room.create('gruselino', internet) : await peer.createInvitation('gruselino', internet); }
+      else if (form === 'join') { incoming = String(data.get('invite')); await join(); }
       else if (form === 'answer') { reply = String(data.get('answer')); await peer.acceptAnswer(reply); }
     });
   }, { signal: events.signal });
@@ -182,6 +211,7 @@ export async function mountLocalGruselino(root: HTMLElement, options: LocalGameO
     if (!button || !root.contains(button) || button.disabled) return;
     const action = button.dataset.local;
     if (action === 'back') { options.onBack(); return; }
+    if (action === 'mode') { if (!busy) { linkMode = !linkMode; notice = ''; render(); } return; }
     if (action === 'reset') { reset(); return; }
     if (action === 'pause') { pause(); return; }
     if (action === 'resume') { if (role === 'host') { if (match?.resume()) publish(); } else send({ type: 'gruselino.resume', round: snapshot!.round }); return; }
@@ -192,7 +222,7 @@ export async function mountLocalGruselino(root: HTMLElement, options: LocalGameO
           if (action === 'share' && navigator.share) {
             const url = new URL('./', document.baseURI); url.hash = `gruselino?${new URLSearchParams({ invite: outgoing })}`;
             await navigator.share(role === 'host' ? { title: 'Gruselino zusammen spielen', url: url.href } : { title: 'Gruselino-Antwortcode', text: outgoing });
-          } else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(outgoing); notice = 'Code kopiert.'; render(); }
+          } else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(shareValue()); notice = rooms.readRoomInvite(outgoing) ? 'Link kopiert.' : 'Code kopiert.'; render(); }
           else { const field = root.querySelector<HTMLTextAreaElement>('[data-output]'); field?.focus(); field?.select(); notice = 'Halte den markierten Code gedrückt und wähle „Kopieren“.'; }
         } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) { notice = 'Teilen oder Kopieren hat nicht geklappt. Du kannst den Code markieren und kopieren.'; render(); } }
       })();
@@ -208,8 +238,9 @@ export async function mountLocalGruselino(root: HTMLElement, options: LocalGameO
   window.addEventListener('pagehide', pause, { signal: events.signal });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') pause(); }, { signal: events.signal });
   render();
+  if (options.invite && rooms.readRoomInvite(options.invite)) void run(join);
   return {
-    invitation(code: string): void { if (peer.state === 'connected' || snapshot) { notice = 'Beende zuerst die aktuelle Partie.'; render(); return; } incoming = code; render(); },
-    dispose(): void { disposed = true; cancel(); events.abort(); peer.close(); root.classList.remove('g-local', 'g-lobby', 'gruselino'); root.style.removeProperty('--g-players'); root.replaceChildren(); },
+    invitation(code: string): void { if (peer.state === 'connected' || snapshot) { notice = 'Beende zuerst die aktuelle Partie.'; render(); return; } incoming = code; if (rooms.readRoomInvite(code)) void run(join); else render(); },
+    dispose(): void { disposed = true; cancel(); events.abort(); room?.close(); peer.close(); root.classList.remove('g-local', 'g-lobby', 'gruselino'); root.style.removeProperty('--g-players'); root.replaceChildren(); },
   };
 }

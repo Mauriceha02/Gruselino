@@ -11,3 +11,5 @@ Zu zweit: „Mitspieler im WLAN“ → Einladung teilen → Antwortcode beim Gas
 Für ein Update zuerst Gruselino auf `Dev` pushen, danach die Spiele-App mit der neuen Commit-ID in `games.json`. Gruselino braucht dafür keine eigene GitHub-Pages-Installation.
 
 [Regeln und Planung](PLAN.md).
+
+Einladungslinks verbinden beide Geräte ohne Antwortcode, sobald der gemeinsame Cloudflare-Dienst in Game-Multiplayers `connection.json` eingerichtet ist. Spieler benötigen kein Konto. Ohne Internet steht weiterhin der Code-Modus zur Verfügung. Die Verbindung bleibt direkt; die Solospielstände bleiben lokal.
